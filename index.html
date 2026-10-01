@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <Title>
+            Escape Classroom
+        </Title>
+        <style>
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+            /*img {
+                width: 100vw;
+                height: 100vh;
+                object-fit: contain;
+            }*/
+            .game-scene {
+                width: 100vw;
+                height: 100vh;
+                /*position: relative;
+                width: 100%;
+                max-width: 1400px;
+                margin: auto;*/
+            }
+            .game-scene img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+            .intro {
+                width: 100vw;
+                height: 100vh;
+                background-image: url("intro.jpg");
+                background-size: cover;
+                background-position: center;
+            }
+            .scene-image {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+            .hotspot {
+                position: absolute;
+                cursor: pointer;
+            }
+            /*Solo para desarrollo*/ 
+            /*.hotspot{
+                position:absolute;
+                cursor:pointer;
+                border:2px solid yellow;
+                background:rgba(255,255,0,.15);
+            }*/
+            /* Oculta elementos */
+            .modal.oculto{
+                display:none;
+            }
+            /* Fondo oscuro */
+            .modal{
+                position:fixed;
+                top:0;
+                left:0;
+                width:100%;
+                height:100%;
+                background:rgba(0,0,0,.7);
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                z-index:9999;
+            }
+
+            /* Ventana */
+            .modal-content{
+                background:white;
+                width:500px;
+                max-width:90%;
+                padding:25px;
+                border-radius:12px;
+                box-shadow:0 10px 25px rgba(0,0,0,.3);
+                animation:aparecer .3s ease;
+            }
+
+            /* Botón cerrar */
+            .cerrar{
+                float:right;
+                font-size:28px;
+                font-weight:bold;
+                cursor:pointer;
+            }
+
+            .cerrar:hover{
+                color:red;
+            }
+
+            .modal-content h2{
+                margin-top:0;
+            }
+
+            .modal-content input{
+                width:100%;
+                padding:10px;
+                margin-top:10px;
+                margin-bottom:15px;
+                box-sizing:border-box;
+            }
+
+            .acciones{
+                text-align:right;
+            }
+
+            .acciones button{
+                padding:10px 20px;
+                cursor:pointer;
+            }
+
+            #resultado{
+                margin-top:15px;
+                font-weight:bold;
+            }
+
+            @keyframes aparecer{
+                from{
+                    opacity:0;
+                    transform:scale(.8);
+                }
+                to{
+                    opacity:1;
+                    transform:scale(1);
+                }
+            }
+            /*Scenario*/
+            .scene-container{
+                position:relative;
+                width:100vw;
+                height:100vh;
+            }
+
+            .scene-container img{
+                width:100%;
+                height:100%;
+                object-fit:cover;
+            }
+
+            .zone{
+                background:transparent;
+                border:none;
+            }
+
+            /* Mostrar visualmente durante pruebas */
+            .zone{
+                border:2px solid red;
+                background:rgba(255,0,0,.15);
+            }
+            .zone-left{
+                left:0;
+                top:0;
+
+                width:20%;
+                height:100%;
+            }
+            .zone-center{
+                left:20%;
+                top:0;
+
+                width:60%;
+                height:100%;
+            }
+            .zone-right{
+                right:0;
+                top:0;
+
+                width:20%;
+                height:100%;
+            }
+            .arrow{
+                position:absolute;
+                top:50%;
+                transform:translateY(-50%);
+                width:60px;
+                height:60px;
+                border-radius:50%;
+                background:rgba(0,0,0,.45);
+                cursor:pointer;
+                z-index:100;
+                transition:.2s;
+            }
+            .arrow:hover{
+                transform:translateY(-50%) scale(1.1);
+                background:rgba(0,0,0,.70);
+            }
+            .arrow-left{
+                left:20px;
+            }
+
+            .arrow-left::before{
+                content:"◀";
+                color:white;
+                font-size:35px;
+                position:absolute;
+                top:50%;
+                left:50%;
+                transform:translate(-50%,-50%);
+            }
+            .arrow-right{
+                right:20px;
+            }
+
+            .arrow-right::before{
+                content:"▶";
+                color:white;
+                font-size:35px;
+                position:absolute;
+                top:50%;
+                left:50%;
+                transform:translate(-50%,-50%);
+            }
+
+            .arrow-up{
+                top:20px;
+                left:50%;
+                transform:translateX(-50%);
+            }
+
+            .arrow-up:hover{
+                transform:translateX(-50%) scale(1.1);
+            }
+
+            .arrow-up::before{
+                content:"▲";
+                color:white;
+                font-size:35px;
+                position:absolute;
+                top:50%;
+                left:50%;
+                transform:translate(-50%,-50%);
+            }
+            .arrow-down{
+                top:auto;
+                bottom:20px;
+                left:50%;
+                transform:translateX(-50%);
+            }
+
+            .arrow-down:hover{
+                transform:translateX(-50%) scale(1.1);
+            }
+
+            .arrow-down::before{
+                content:"▼";
+                color:white;
+                font-size:35px;
+                position:absolute;
+                top:50%;
+                left:50%;
+                transform:translate(-50%,-50%);
+            }
+        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <div id="play_area" class="game-scene">            
+        </div>
+        
+        <div id="modal" class="modal oculto">
+            <div class="modal-content">
+                <span class="cerrar" onclick="closeModal()">x</span>
+
+                <h2 id="titulo"></h2>
+                <p id="pregunta"></p>
+
+                <input type="text" id="respuesta" placeholder="Escribe tu respuesta">
+
+                <div class="acciones">
+                    <button id="btnValidar" onclick="validarRespuesta()">
+                        Validar
+                    </button>
+                </div>
+
+                <p id="resultado"></p>
+            </div>
+        </div>
+    </body>
+    <script>
+        if(window.innerHeight > window.innerWidth){
+            alert("Para una mejor experiencia gira tu dispositivo.");
+        }
+        
+        questions = [
+            "¿Como te llamas?",
+            "El malvado profesor, no acepta que se haya terminado el curso de Transformación digital, como parte de su plan para arruinarte el fin de semana quiere aplicarte un examen sorpresa y un ensayo de todo el curso para el próximo lunes. La puerta esta cerrada y no puedes escapar, resuelve todas las pistas para encontrar la forma de escapar antes de convertirte en su víctima.",
+            "<b>Operadora IA:</b><br/>Ha contactado con el Centro de Respuesta a Emergencias Digitales.<br/>Se ha detectado una anomalía en la red.<br/>Para validar su identidad responda la siguiente pregunta.<br/>",
+            "<br/><b>¿Qué tecnología permite registrar transacciones de forma distribuida e inmutable?</b><br/>1. CRM<br/>2. Blockchain<br/>3. Token<br/>4. DeFi|2",
+            "<br/><b>Tipo de beneficio del cambio organizacional</b><br/>1. Operativos<br/>2. Vacaciones<br/>3. IA<br/>4. Negocios|1",
+            "<br/><b>El entorno físico permanece visible y accesible, pero enriquecido, con superposición grafica, textual o audiovisual</b><br/>1. VR<br/>2. IVR<br/>3. XR<br/>4. AR|4",
+            "<br/><b>Tipo de análsis basados en big data</b><br/>1. Permisivo<br/>2. Predictivo<br/>3. Pertinente<br/>4. Personalizado|2",
+            "<br/><b>¿Que rol de scrum representa los intereses del cliente</b><br/>1. Scrum Master<br/>2. Equipo de desarrollo<br/>3. Product Owner<br/>4. Equipo de calidad|3",
+            "<br/><br/><b>Orden de las fases del pensamiento creativo:</b><br/><br/><select id='cmb1'><option value='Definir'>Definir</option><option value='Empatizar'>Empatizar</option><option value='Evaluar'>Evaluar</option><option value='Idear'>Idear</option><option value='Prototipar'>Prototipar</option></select> <select id='cmb2'><option value='Definir'>Definir</option><option value='Empatizar'>Empatizar</option><option value='Evaluar'>Evaluar</option><option value='Idear'>Idear</option><option value='Prototipar'>Prototipar</option></select> <select id='cmb3'><option value='Definir'>Definir</option><option value='Empatizar'>Empatizar</option><option value='Evaluar'>Evaluar</option><option value='Idear'>Idear</option><option value='Prototipar'>Prototipar</option></select> <select id='cmb4'><option value='Definir'>Definir</option><option value='Empatizar'>Empatizar</option><option value='Evaluar'>Evaluar</option><option value='Idear'>Idear</option><option value='Prototipar'>Prototipar</option></select> <select id='cmb5'><option value='Definir'>Definir</option><option value='Empatizar'>Empatizar</option><option value='Evaluar'>Evaluar</option><option value='Idear'>Idear</option><option value='Prototipar'>Prototipar</option></select>|",
+            "<br/><b>¿Cuales son las necesidades psicológicas aplicadas en la gamificación?</b><br/><br/><select id='cmb1'><option value='Entretenimiento, Competencia y Premio'>Entretenimiento, Competencia y Vinculo Social</option><option value='Reglas, Puntaje, Competencia'>Reglas, Puntaje, Competencia</option><option value='Autonomía, Competencia y Vinculo Social'>Autonomía, Competencia y Vinculo Social</option><option value='Definición, Competencia y Vinculo Social'>Definición, Competencia y Vinculo Social</option><option value='Autonomia, Competencia y Reglas'>Autonomia, Competencia y Reglas</option></select>|Autonomía, Competencia y Vinculo Social",
+            "ORION-88|NEXUS-47|SIGMA-21|OMEGA-13|VECTOR-9",
+            "581472|294863|736915|418257|925384"
+        ];
+
+        cableCelular = false;
+        cargadorCelular = false;
+        Celular = false;
+        CelularCargado = false;
+        LlavePuerta = false;
+        controlRemoto = false;
+        proyectorEncendido = false;
+        cabinetDoorIsOpen1 = false;
+        cabinetDoorIsOpen2 = false;
+        latopEncendida = false;
+        doorIsOpen = false;
+        codigoQrActivado = false;
+
+        currentQuestion = null;
+        currentAnswer = null;
+        play_area = document.getElementById("play_area");
+        modal = document.getElementById("modal");
+        pregunta = document.getElementById("pregunta");
+        respuesta = document.getElementById("respuesta");
+        resultado = document.getElementById("resultado");
+        btnValidar = document.getElementById("btnValidar");
+        playerName = "";
+        passwordLaptop = "";
+        claveGavinete2 = "";
+        play_area.innerHTML = '<img src="img/Intro.png" onclick="player_name()" />'
+
+        function init(){
+            let lstPassword = questions[10].split("|");
+            let position = random(0, 4);
+            passwordLaptop = lstPassword[position];
+
+            let lstClaves = questions[11].split("|");
+            position = random(0, 4);
+            claveGavinete2 = lstClaves[position];
+        }
+
+        function random(min, max){
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        function openModal() {
+            respuesta.value = "";
+            resultado.innerHTML = "";
+            respuesta.style.display = "";
+            btnValidar.style.display = ""
+            modal.classList.remove("oculto");            
+        }
+
+        function closeModal() {
+            modal.classList.add("oculto");
+        }
+
+        function validarRespuesta(){
+            switch (currentQuestion){
+                case 0: {
+                    playerName = respuesta.value;
+                    closeModal();
+                    play(0);                    
+                    break;
+                }
+                case 1:{
+                    closeModal();
+                    respuesta.style.display = "";
+                    play(1);
+                    break;
+                }
+                case 2:{
+                    respuesta.style.display = "none";
+                    btnValidar.style.display = "none"
+                    if(respuesta.value == currentAnswer){    
+                        resultado.innerHTML = "<b>Correcto!!!<br/><br/><i>Código activado.</i></b>";
+                        codigoQrActivado = true;
+                    }
+                    else{
+                        resultado.innerHTML = "La respuesta es incorrecta :(";
+                    }
+                    break;
+                }
+                case 8:{
+                    respuesta.style.display = "none";
+                    btnValidar.style.display = "none"
+                    let cmb1 = document.getElementById("cmb1").value;
+                    let cmb2 = document.getElementById("cmb2").value;
+                    let cmb3 = document.getElementById("cmb3").value;
+                    let cmb4 = document.getElementById("cmb4").value;
+                    let cmb5 = document.getElementById("cmb5").value;
+
+                    if(cmb1 == "Empatizar" && cmb2 == "Definir" && cmb3 == "Idear" && cmb4 == "Prototipar" && cmb5 == "Evaluar"){
+                        resultado.innerHTML = "<b>Correcto!!!<br/>Code: <i>" + passwordLaptop +"</i></b>";
+                        latopEncendida = true;
+                    }
+                    else{
+                        resultado.innerHTML = "El orden es incorrecto :(";
+                    }
+                    break;
+                }
+                case 9:{
+                    respuesta.style.display = "none";
+                    btnValidar.style.display = "none"
+                    let cmb1 = document.getElementById("cmb1").value;
+                    
+                    if(cmb1 == currentAnswer){
+                        resultado.innerHTML = "<b>Correcto!!!<br/>Code: <i>" + passwordLaptop + "</i></b>";
+                        latopEncendida = true;
+                    }
+                    else{
+                        resultado.innerHTML = "La respuesta es incorrecta :(";
+                    }
+                    break;
+                }
+                case 10:{                    
+                    respuesta.style.display = "none";
+                    btnValidar.style.display = "none";
+
+                    if(respuesta.value == passwordLaptop){
+                        resultado.innerHTML = "<b>Acceso Concedido...<br/><br/><i>Su Código: " + claveGavinete2 + "<i></b>";
+                    }
+                    else{
+                        resultado.innerHTML = "<b>Acceso Denegado.</b>";
+                    }
+                    break;
+                }
+                case 11:{
+                    respuesta.style.display = "none";
+                    btnValidar.style.display = "none";
+
+                    if(respuesta.value == "273038"){
+                        cabinetDoorIsOpen1 = true;
+                        closeModal();
+                        scenario(9);
+                    }
+                    else{
+                        resultado.innerHTML = "<b>Acceso Denegado.</b>";
+                    }
+                    break;
+                }
+                case 12:{
+                    respuesta.style.display = "none";
+                    btnValidar.style.display = "none";
+
+                    if(respuesta.value == claveGavinete2){
+                        cabinetDoorIsOpen2 = true;
+                        closeModal();
+                        scenario(10);
+                    }
+                    else{
+                        resultado.innerHTML = "<b>Acceso Denegado.</b>";
+                    }
+                    break;
+                }
+                default:{
+                    console.log("This question don't exist");
+                }
+            }
+        }
+        
+        function player_name(){
+            openModal();
+            pregunta.innerHTML = questions[0];
+            currentQuestion = 0;
+        }
+
+        function play(position){
+            switch(position){
+                case 0: { start(); break; }
+                case 1: { scenario(0); break; }
+                default: { console.log("This positon don't exist"); }
+            }            
+        }
+
+        function start(){
+            openModal();
+            pregunta.innerHTML = questions[1];
+            currentQuestion = 1;
+            respuesta.style.display = "none";
+        }
+
+        function call911(){
+            openModal();
+            if(CelularCargado){
+                let question = random(3, 7)
+                strsplit = questions[question].split("|");
+                pregunta.innerHTML = questions[2] + strsplit[0];
+                currentQuestion = 2;
+                currentAnswer = strsplit[1];
+            }
+            else{
+                respuesta.style.display = "none";
+                btnValidar.style.display = "none";
+                pregunta.innerHTML = "Mmmmmm... una linea de ayuda.";                
+            }
+        }
+
+        function openDoor(){
+            openModal();
+            if(LlavePuerta){
+                respuesta.style.display = "none";
+                btnValidar.style.display = "none";
+                scenario(5);
+                pregunta.innerHTML = "La llave abrio la puerta... Me he liberado de Transformación digital!!!";
+                doorIsOpen = true;
+            }
+            else{
+                respuesta.style.display = "none";
+                btnValidar.style.display = "none";
+                pregunta.innerHTML = "La puerta esta cerrada con llave";
+            }
+        }
+
+        function powerOutlet(){
+            openModal();
+            if(cargadorCelular && cableCelular && Celular){
+                respuesta.style.display = "none";
+                btnValidar.style.display = "none";
+                pregunta.innerHTML = "Vaya el <b>celular</b> se esta cargando... <b>ya encendio</b>!!!";
+                CelularCargado = true;
+            }
+            else{
+                respuesta.style.display = "none";
+                btnValidar.style.display = "none";
+                pregunta.innerHTML = "Una toma de corriente, no tengo nada para cargar...";
+            }
+        }
+
+        function phoneCharger(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "Vaya, un cargador de celular.";
+            cargadorCelular = true;
+        }
+
+        /*function remoteControl(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "El control remoto del proyector.";
+            controlRemoto = true;
+            scenario(10);
+        }*/
+
+        function codeQR(){
+            openModal();
+            respuesta.style.display = "none";
+            if(codigoQrActivado){
+                let question = random(8, 9);
+                strsplit = questions[question].split("|");
+                pregunta.innerHTML = '<b>Tú</b>: "Un código QR, voy a escanearlo"<br/><br/><b>Contestadora IA</b>: Bienvenido a la App de transformación digital, favor de contestar lo siguiente: ' + strsplit[0];
+                currentQuestion = question;
+                currentAnswer = strsplit[1];
+            }
+            else{
+                btnValidar.style.display = "none";
+                if(CelularCargado){
+                    pregunta.innerHTML = "<b>Contestadora IA:</b> Código QR desactivado.<br/><br/><b>Tú:</b> Creo que necesito algún tipo de ayuda para activarlo.";
+                }
+                else{                    
+                    pregunta.innerHTML = "Un código QR... Pero no tengo como leerlo.";
+                }                    
+            }            
+        }
+
+        function cabinetDoor1(){
+            if(cabinetDoorIsOpen1){
+                scenario(9);
+            }
+            else{
+                openModal();
+                //respuesta.style.display = "none";
+                //btnValidar.style.display = "none";
+                pregunta.innerHTML = "Introducir clave de seguridad:";
+                currentQuestion = 11;
+            }
+        }
+
+        function cabinetDoor2(){
+            if(cabinetDoorIsOpen2){
+                scenario(10);
+            }
+            else{
+                openModal();
+                //respuesta.style.display = "none";
+                //btnValidar.style.display = "none";
+                pregunta.innerHTML = "Introducir clave de seguridad:";
+                currentQuestion = 12;
+            }
+        }
+
+        function GetCellPhone(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "Excelente un celular pero tiene poca pila, voy a pedir ayuda... MMM, se apago necesito algo para cargarlo.";
+            Celular = true;
+            scenario(9);
+        }
+
+        function GetRemoteControl(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "Tengo el control del proyector, pero... ¿Que puedo hacer con el?";
+            controlRemoto = true;
+            scenario(10);
+        }
+
+        function GetCable(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "Un cable usb, puedo cargar algo con esto";
+            cableCelular = true;
+            scenario(7);
+        }
+
+        function TurnOnProjector(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            if(controlRemoto){
+                pregunta.innerHTML = "Tal vez si enciendo el proyector con el control pase algo.";
+                proyectorEncendido = true;
+                scenario(17);
+            }
+            else{
+                pregunta.innerHTML = "El proyector esta apagado.";
+            }            
+        }
+
+        function getKey(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "Hooooo, encontre una llave sobre la lente del proyector... ¿Será de la puerta?";
+            LlavePuerta = true;
+        }
+
+        function getCharger(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "Un cargador de celular.";
+            cargadorCelular = true;
+            scenario(23);
+        }
+
+        function setPassword(){
+            openModal();
+            pregunta.innerHTML = "PASSWORD:";
+            currentQuestion = 10;            
+        }
+
+        function youWin(){
+            openModal();
+            respuesta.style.display = "none";
+            btnValidar.style.display = "none";
+            pregunta.innerHTML = "Felicidades " + playerName + "!!!, Te haz liberado de Transformación Dital.";
+        }
+
+        function scenario(slide){
+            switch(slide){
+                case 0: {
+                    if(!proyectorEncendido){
+                        play_area.innerHTML = `
+                            <div class="scene-container">
+                                <img src="img/IMG_0.jpg" />
+
+                                <!-- Pared izquierda -->
+                                <div class="arrow arrow-left"
+                                    onclick="scenario(1)">
+                                </div>
+
+                                <!-- Pared derecha -->
+                                <div class="arrow arrow-right"
+                                    onclick="scenario(3)">
+                                </div>
+
+                                <!-- Escritorio / Laptop -->
+                                <div class="hotspot"
+                                    style="
+                                        left:82%;
+                                        top:55%;
+                                        width:18%;
+                                        height:28%;
+                                    "
+                                    onclick="scenario(6)">
+                                </div>
+
+                                <!-- Cartel verde -->
+                                <div class="hotspot"
+                                    style="
+                                        left:14%;
+                                        top:34%;
+                                        width:12%;
+                                        height:23%;
+                                    "
+                                    onclick="scenario(11)">
+                                </div>
+
+                                <!-- Pantalla del proyector -->
+                                <div class="hotspot"
+                                    style="
+                                        left:58%;
+                                        top:50%;
+                                        width:12%;
+                                        height:15%;
+                                    "
+                                    onclick="scenario(12)">
+                                </div>
+                            </div>`;
+                    }
+                    else if(proyectorEncendido && LlavePuerta == false){
+                        play_area.innerHTML = `
+                            <div class="scene-container">
+                                <img src="img/IMG_0a.jpg" />
+
+                                <!-- Pared izquierda -->
+                                <div class="arrow arrow-left"
+                                    onclick="scenario(1)">
+                                </div>
+
+                                <!-- Pared derecha -->
+                                <div class="arrow arrow-right"
+                                    onclick="scenario(3)">
+                                </div>
+
+                                <!-- Escritorio / Laptop -->
+                                <div class="hotspot"
+                                    style="
+                                        left:82%;
+                                        top:55%;
+                                        width:18%;
+                                        height:28%;
+                                    "
+                                    onclick="scenario(6)">
+                                </div>
+
+                                <!-- Cartel verde -->
+                                <div class="hotspot"
+                                    style="
+                                        left:14%;
+                                        top:34%;
+                                        width:12%;
+                                        height:23%;
+                                    "
+                                    onclick="scenario(11)">
+                                </div>
+
+                                <!-- Pantalla del proyector -->
+                                <div class="hotspot"
+                                    style="
+                                        left:58%;
+                                        top:50%;
+                                        width:12%;
+                                        height:15%;
+                                    "
+                                    onclick="scenario(12)">
+                                </div>
+                            </div>`;
+                    }
+                    else{
+                        play_area.innerHTML = `
+                            <div class="scene-container">
+                                <img src="img/IMG_0b.jpg" />
+
+                                <!-- Pared izquierda -->
+                                <div class="arrow arrow-left"
+                                    onclick="scenario(1)">
+                                </div>
+
+                                <!-- Pared derecha -->
+                                <div class="arrow arrow-right"
+                                    onclick="scenario(3)">
+                                </div>
+
+                                <!-- Escritorio / Laptop -->
+                                <div class="hotspot"
+                                    style="
+                                        left:82%;
+                                        top:55%;
+                                        width:18%;
+                                        height:28%;
+                                    "
+                                    onclick="scenario(6)">
+                                </div>
+
+                                <!-- Cartel verde -->
+                                <div class="hotspot"
+                                    style="
+                                        left:14%;
+                                        top:34%;
+                                        width:12%;
+                                        height:23%;
+                                    "
+                                    onclick="scenario(11)">
+                                </div>
+
+                                <!-- Pantalla del proyector -->
+                                <div class="hotspot"
+                                    style="
+                                        left:58%;
+                                        top:50%;
+                                        width:12%;
+                                        height:15%;
+                                    "
+                                    onclick="scenario(12)">
+                                </div>
+                            </div>`;
+                    }
+                    
+                    break;
+                }
+                case 1: {
+                    play_area.innerHTML =`
+                        <div class="scene-container">
+                            <img src="img/IMG_1.jpg" />
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(2)">
+                            </div>
+
+                            <!-- Pared derecha -->
+                            <div class="arrow arrow-right"
+                                onclick="scenario(0)">
+                            </div>
+
+                            <!-- Puerta -->
+                            <div class="hotspot"
+                                style="
+                                    left:77%;
+                                    top:28%;
+                                    width:12%;
+                                    height:55%;
+                                "
+                                onclick="scenario(4)">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 2: {
+                    play_area.innerHTML =`
+                        <div class="scene-container">
+                            <img src="img/IMG_2.jpg" />
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(3)">
+                            </div>
+
+                            <!-- Pared derecha -->
+                            <div class="arrow arrow-right"
+                                onclick="scenario(1)">
+                            </div>
+
+                            <div class="arrow arrow-up"
+                                onclick="scenario(22)">
+                            </div>
+
+                            <!-- proyector -->
+                            <div class="hotspot"
+                                style="
+                                    left:52%;
+                                    top:0%;
+                                    width:10%;
+                                    height:10%;
+                                "
+                                onclick="scenario(17)">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 3: {
+                    play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_3.jpg" />
+
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(0)">
+                            </div>
+
+                            <!-- Pared derecha -->
+                            <div class="arrow arrow-right"
+                                onclick="scenario(2)">
+                            </div>
+                            
+                            <div class="arrow arrow-up"
+                                onclick="scenario(21)">
+                            </div>
+
+                            <!-- Cargador -->
+                            <!--div class="hotspot"
+                                style="
+                                    left:82%;
+                                    top:55%;
+                                    width:18%;
+                                    height:28%;
+                                "
+                                onclick="scenario(4)">
+                            </div-->
+                        </div>`;
+                    break;
+                }
+                case 4: {
+                    if(doorIsOpen){
+                        scenario(5);
+                    }
+                    else{
+                        play_area.innerHTML =`
+                        <div class="scene-container">
+                            <img src="img/IMG_4.jpg" />
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(1)">
+                            </div>
+
+                            <!-- Puerta -->
+                            <div class="hotspot"
+                                style="
+                                    left:45%;
+                                    top:45%;
+                                    width:14%;
+                                    height:55%;
+                                "
+                                onclick="openDoor()">
+                            </div>
+                        </div>`;
+                    }                    
+                    break;
+                }
+                case 5: {
+                    play_area.innerHTML =`
+                        <div class="scene-container">
+                            <img src="img/IMG_5.jpg" />
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(1)">
+                            </div>
+
+                            <!-- Puerta -->
+                            <div class="hotspot"
+                                style="
+                                    left:43%;
+                                    top:40%;
+                                    width:14%;
+                                    height:60%;
+                                "
+                                onclick="youWin()">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 6: {
+                    if(!latopEncendida){
+                        play_area.innerHTML = `
+                            <div class="scene-container">
+                                <img src="img/IMG_6.jpg" />
+                                
+                                <!-- Pared derecha -->
+                                <div class="arrow arrow-right"
+                                    onclick="scenario(0)">
+                                </div>
+                                
+                                <div class="arrow arrow-down"
+                                    onclick="scenario(8)">
+                                </div>
+
+                                <!-- Pantalla -->
+                                <div class="hotspot"
+                                    style="
+                                        left:35%;
+                                        top:15%;
+                                        width:30%;
+                                        height:40%;
+                                    "
+                                    onclick="scenario(7)">
+                                </div>                                
+                            </div>`;
+                    }
+                    else{
+                        play_area.innerHTML = `
+                            <div class="scene-container">
+                                <img src="img/IMG_6a.jpg" />
+                                
+                                <!-- Pared derecha -->
+                                <div class="arrow arrow-right"
+                                    onclick="scenario(0)">
+                                </div>
+                                
+                                <div class="arrow arrow-down"
+                                    onclick="scenario(8)">
+                                </div>
+
+                                <!-- Pantalla -->
+                                <div class="hotspot"
+                                    style="
+                                        left:35%;
+                                        top:15%;
+                                        width:30%;
+                                        height:40%;
+                                    "
+                                    onclick="setPassword()">
+                                </div>                                
+                            </div>`;
+                    }                    
+                    break;
+                }
+                case 7: {
+                    if(!cableCelular){                    
+                        play_area.innerHTML = `
+                            <div class="scene-container">
+                                <img src="img/IMG_7.jpg" />
+                                
+                                <!-- Pared derecha -->
+                                <div class="arrow arrow-right"
+                                    onclick="scenario(0)">
+                                </div>
+                                
+                                <div class="arrow arrow-down"
+                                    onclick="scenario(8)">
+                                </div>
+
+                                <div class="hotspot"
+                                    style="
+                                        left:45%;
+                                        top:17%;
+                                        width:15%;
+                                        height:15%;
+                                    "
+                                    onclick="GetCable()">                                
+                                </div>
+
+                                <!-- Pantalla -->
+                                <div class="hotspot"
+                                    style="
+                                        left:35%;
+                                        top:50%;
+                                        width:30%;
+                                        height:40%;
+                                    "
+                                    onclick="scenario(6)">
+                                </div>
+                            </div>`;
+                    }
+                    else{
+                        play_area.innerHTML = `
+                            <div class="scene-container">
+                                <img src="img/IMG_7a.jpg" />
+                                
+                                <!-- Pared derecha -->
+                                <div class="arrow arrow-right"
+                                    onclick="scenario(0)">
+                                </div>
+                                
+                                <div class="arrow arrow-down"
+                                    onclick="scenario(8)">
+                                </div>                                
+                            </div>`;
+                    }
+                    break;
+                }
+                case 8: {
+                    play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_8.jpg" />
+                            
+                            <!-- Pared arriba -->
+                            <div class="arrow arrow-up"
+                                onclick="scenario(6)">
+                            </div>
+                            
+                            <div class="hotspot"
+                                style="
+                                    left:25%;
+                                    top:7%;
+                                    width:53%;
+                                    height:35%;
+                                "
+                                onclick="cabinetDoor1()">
+                            </div>
+                            <div class="hotspot"
+                                style="
+                                    left:33%;
+                                    top:43%;
+                                    width:35%;
+                                    height:40%;
+                                "
+                                onclick="cabinetDoor2()">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 9: {
+                    if(!Celular){
+                        play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_9.jpg" />
+                            
+                            <!-- Pared arriba -->
+                            <div class="arrow arrow-up"
+                                onclick="scenario(6)">
+                            </div>
+                            
+                            <div class="hotspot"
+                                style="
+                                    left:45%;
+                                    top:30%;
+                                    width:15%;
+                                    height:15%;
+                                "
+                                onclick="GetCellPhone()">
+                            </div>
+                        </div>`;
+                    }
+                    else{
+                        play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_9a.jpg" />
+                            
+                            <!-- Pared arriba -->
+                            <div class="arrow arrow-up"
+                                onclick="scenario(6)">
+                            </div>                                                        
+                        </div>`;
+                    }
+                    break;
+                }
+                case 10: {
+                    if(!controlRemoto){
+                        play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_10.jpg" />
+                            
+                            <!-- Pared arriba -->
+                            <div class="arrow arrow-up"
+                                onclick="scenario(6)">
+                            </div>
+                            
+                            
+                            <div class="hotspot"
+                                style="
+                                    left:45%;
+                                    top:75%;
+                                    width:10%;
+                                    height:15%;
+                                "
+                                onclick="GetRemoteControl()">
+                            </div>
+                        </div>`;
+                    }
+                    else{
+                        play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_10a.jpg" />
+                            
+                            <!-- Pared arriba -->
+                            <div class="arrow arrow-up"
+                                onclick="scenario(6)">
+                            </div>                    
+                        </div>`;
+                    }
+                    
+                    break;
+                }
+                case 11: {
+                    play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_11.jpg" />
+                            
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(0)">
+                            </div>
+
+                            <div class="hotspot"
+                                style="
+                                    left:58%;
+                                    top:80%;
+                                    width:5%;
+                                    height:8%;
+                                "
+                                onclick="call911()">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 12: {
+                    play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_12.jpg" />
+
+                            <!-- Pared derecha -->
+                            <div class="arrow arrow-right"
+                                onclick="scenario(0)">
+                            </div>
+
+                            <div class="hotspot"
+                                style="
+                                    left:30%;
+                                    top:30%;
+                                    width:20%;
+                                    height:50%;
+                                "
+                                onclick="codeQR()">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 17: {
+                    if(!proyectorEncendido){
+                        play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_17.jpg" />
+
+                            <!-- Pared derecha -->
+                            <div class="arrow arrow-down"
+                                onclick="scenario(2)">
+                            </div>
+
+                            <!-- proyector -->
+                            <div class="hotspot"
+                                style="
+                                    left:38%;
+                                    top:43%;
+                                    width:20%;
+                                    height:20%;
+                                "
+                                onclick="TurnOnProjector()">
+                            </div>
+                        </div>`;
+                    }
+                    else{
+                        play_area.innerHTML = `
+                        <div class="scene-container">
+                            <img src="img/IMG_17a.jpg" />
+
+                            <!-- Pared derecha -->
+                            <div class="arrow arrow-down"
+                                onclick="scenario(2)">
+                            </div>
+
+                            <!-- proyector -->
+                            <div class="hotspot"
+                                style="
+                                    left:38%;
+                                    top:36%;
+                                    width:20%;
+                                    height:20%;
+                                "
+                                onclick="getKey()">
+                            </div>
+                        </div>`;
+                    }
+                    
+                    break;
+                }
+                case 21: {
+                    play_area.innerHTML =`
+                        <div class="scene-container">
+                            <img src="img/IMG_21.jpg" />
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(3)">
+                            </div>
+
+                            <!-- Puerta -->
+                            <div class="hotspot"
+                                style="
+                                    left:43%;
+                                    top:0%;
+                                    width:5%;
+                                    height:10%;
+                                "
+                                onclick="powerOutlet()">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 22: {
+                    play_area.innerHTML =`
+                        <div class="scene-container">
+                            <img src="img/IMG_22.jpg" />
+                            <!-- Pared izquierda -->
+                            <div class="arrow arrow-left"
+                                onclick="scenario(2)">
+                            </div>
+
+                            <!-- Silla -->
+                            <div class="hotspot"
+                                style="
+                                    left:42%;
+                                    top:72%;
+                                    width:16%;
+                                    height:20%;
+                                "
+                                onclick="scenario(23)">
+                            </div>
+                        </div>`;
+                    break;
+                }
+                case 23: {
+                    if(!cargadorCelular){
+                        play_area.innerHTML =`
+                            <div class="scene-container">
+                                <img src="img/IMG_23.jpg" />
+                                <!-- Pared izquierda -->
+                                <div class="arrow arrow-left"
+                                    onclick="scenario(2)">
+                                </div>
+
+                                <!-- Silla -->
+                                <div class="hotspot"
+                                    style="
+                                        left:45%;
+                                        top:75%;
+                                        width:14%;
+                                        height:20%;
+                                    "
+                                    onclick="getCharger()">
+                                </div>
+                            </div>`;
+                    }
+                    else{
+                        play_area.innerHTML =`
+                            <div class="scene-container">
+                                <img src="img/IMG_23a.jpg" />
+                                <!-- Pared izquierda -->
+                                <div class="arrow arrow-left"
+                                    onclick="scenario(2)">
+                                </div>                                
+                            </div>`;
+                    }                    
+                    break;
+                }
+            }            
+        }
+        
+        init();
+    </script>
+</html>
